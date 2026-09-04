@@ -1,0 +1,36 @@
+kind = "web"
+previewPath = "/"
+title = "CivicForge"
+description = "A collaborative platform where communities, universities, and industry partners turn societal challenges into practical solutions with AI-assisted problem framing and project collaboration."
+version = "1.0.0"
+id = "artifacts/civicforge"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22222
+
+[services.development]
+run = "pnpm --filter @workspace/civicforge run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/civicforge", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/civicforge/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22222"
+BASE_PATH = "/"
+
+[[services]]
+name = "streamlit"
+paths = [ "/streamlit" ]
+localPort = 8501
+
+[services.development]
+run = "streamlit run artifacts/civicforge/streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.baseUrlPath streamlit --server.headless true"

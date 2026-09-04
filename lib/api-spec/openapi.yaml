@@ -1,0 +1,252 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: challenges
+    description: Societal challenge and solution operations
+  - name: partners
+    description: University and industry partner discovery
+  - name: insights
+    description: Platform summaries
+  - name: ai
+    description: AI-assisted challenge framing
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /challenges:
+    get:
+      operationId: listChallenges
+      tags: [challenges]
+      summary: List active societal challenges
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Challenge list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Challenge"
+    post:
+      operationId: createChallenge
+      tags: [challenges]
+      summary: Submit a societal challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeInput"
+      responses:
+        "201":
+          description: Created challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+  /challenges/{challengeId}:
+    get:
+      operationId: getChallenge
+      tags: [challenges]
+      summary: Get a challenge
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+      responses:
+        "200":
+          description: Challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        "404":
+          description: Not found
+    post:
+      operationId: joinChallenge
+      tags: [challenges]
+      summary: Join a challenge team
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinChallengeInput"
+      responses:
+        "200":
+          description: Updated challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+  /partners:
+    get:
+      operationId: listPartners
+      tags: [partners]
+      summary: List collaboration partners
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Partner list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Partner"
+  /insights/summary:
+    get:
+      operationId: getSummary
+      tags: [insights]
+      summary: Get platform summary metrics
+      responses:
+        "200":
+          description: Platform metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Summary"
+  /ai/frame-challenge:
+    post:
+      operationId: frameChallengeWithAi
+      tags: [ai]
+      summary: Turn a rough issue into a collaborative challenge brief
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiFrameInput"
+      responses:
+        "200":
+          description: AI generated framing suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiFrame"
+components:
+  parameters:
+    ChallengeId:
+      name: challengeId
+      in: path
+      required: true
+      schema:
+            type: number
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Challenge:
+      type: object
+      required: [id, title, summary, category, location, status, impact, participants, partners, timeLeft, createdBy, createdAt]
+      properties:
+        id: { type: number }
+        title: { type: string }
+        summary: { type: string }
+        category: { type: string }
+        location: { type: string }
+        status: { type: string }
+        impact: { type: string }
+        participants: { type: number }
+        partners:
+          type: array
+          items: { type: string }
+        timeLeft: { type: string }
+        createdBy: { type: string }
+        createdAt: { type: string }
+    ChallengeInput:
+      type: object
+      required: [title, summary, category, location, impact]
+      properties:
+        title: { type: string, minLength: 3 }
+        summary: { type: string, minLength: 10 }
+        category: { type: string }
+        location: { type: string }
+        impact: { type: string }
+        createdBy: { type: string }
+    JoinChallengeInput:
+      type: object
+      properties:
+        role: { type: string }
+    Partner:
+      type: object
+      required: [id, name, type, focus, location, openProjects, initials, color]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        type: { type: string }
+        focus: { type: string }
+        location: { type: string }
+        openProjects: { type: number }
+        initials: { type: string }
+        color: { type: string }
+    Summary:
+      type: object
+      required: [activeChallenges, projectsInMotion, peopleContributing, partnerOrganizations, solvedThisYear]
+      properties:
+        activeChallenges: { type: number }
+        projectsInMotion: { type: number }
+        peopleContributing: { type: number }
+        partnerOrganizations: { type: number }
+        solvedThisYear: { type: number }
+    AiFrameInput:
+      type: object
+      required: [rawIdea]
+      properties:
+        rawIdea: { type: string, minLength: 10 }
+        context: { type: string }
+    AiFrame:
+      type: object
+      required: [title, framing, outcomes, tags, suggestedPartners]
+      properties:
+        title: { type: string }
+        framing: { type: string }
+        outcomes:
+          type: array
+          items: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        suggestedPartners:
+          type: array
+          items: { type: string }
+
